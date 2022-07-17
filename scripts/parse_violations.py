@@ -33,13 +33,13 @@ def parse_violations(df):
             print(x, "/", len(dfv))
             
     dff = pd.DataFrame(rows)
-    vios = newdf['Violation'].str.split(".", n=1, expand=True)
-    dff['Violation #']=vios[0]
-    dff['Violation Desc']=vios[1]
-    dff['Comments'] = dff['Violation'].map(lambda x: x.split("- Comments:")[1])
+    vios = dff['Violation'].str.split(".", n=1, expand=True)
     dff = dff.drop(columns='Violation')
+    dff['Violation #']=vios[0].apply(lambda x: int(x.strip()))
+    dff['Violation Desc']=vios[1].str.split("- Comments:", n=1, expand=True)[0].apply(lambda x: x.strip())
+    dff['Comments']=vios[1].str.split("- Comments:", n=1, expand=True)[1].apply(lambda x: x.strip())
     return dff
 
-    df = pd.read_csv("../data/Food_Inspections.csv")
-    dff = parse_violations(df)
-    #dff.to_csv("Violations_Parsed.csv",index=False)
+df = pd.read_csv("../data/Food_Inspections.csv")
+dff = parse_violations(df)
+#dff.to_csv("Violations_Parsed.csv",index=False)
