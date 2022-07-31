@@ -1,0 +1,95 @@
+digraph Workflow {
+rankdir=LR
+fontname=Courier; fontsize=18; labelloc=t
+label=Workflow
+
+
+
+node[shape=box style=filled fillcolor="#CCFFCC" peripheries=1 fontname=Courier]
+subgraph cluster_workflow_box_outer1 { label="OpenRefine"; color=black; penwidth=2
+subgraph cluster_workflow_box_inner1 { label=""; color=white
+
+    Facility_Type [shape=record rankdir=LR label="{{<f0> Facility_Type |<f1> Leave Only Restaurants in Facility Type Column}}"];
+    Location [shape=record rankdir=LR label="{{<f0> Location |<f1> Leave Only Chicago in City Column}}"];
+    Names [shape=record rankdir=LR label="{{<f0> Names |<f1> Inline Python to Standardize Restaurant Names}}"];
+
+    edge[fontname=Helvetica]
+    Facility_Type -> Location
+    Location -> Names
+
+}}
+
+node[shape=box style=filled fillcolor="#CCFFCC" peripheries=1 fontname=Courier]
+subgraph cluster_workflow_box_outer2 { label="Python Cleaning"; color=black; penwidth=2
+subgraph cluster_workflow_box_inner2 { label=""; color=white
+
+    node[shape=box style=filled fillcolor="#CCFFCC" peripheries=1 fontname=Courier]
+    subgraph cluster_workflow_box_outer21 { label="Parse Violations"; color=black; penwidth=2
+    subgraph cluster_workflow_box_inner21 { label=""; color=white
+
+        Subset_Violations [shape=record rankdir=LR label="{{<f0> Subset_Violations |<f1> Expand out of single column}}"];
+        Indexing_Loop [shape=record rankdir=LR label="{{<f0> Indexing_Loop |<f1> Create Dict of Violations}}"];
+        Violation_Data [shape=record rankdir=LR label="{{<f0> Violation_Data |<f1> Dict to DF with Comments split}}"];
+
+        edge[fontname=Helvetica]
+        Subset_Violations -> Indexing_Loop
+        Indexing_Loop -> Violation_Data
+
+    }}
+
+    Integrity_Check_Keys [shape=record rankdir=LR label="{{<f0> Integrity_Check_Keys |<f1> Ensure Unique Business Name to License Relation}}"];
+    
+}}
+
+node[shape=box style=filled fillcolor="#CCFFCC" peripheries=1 fontname=Courier]
+subgraph cluster_workflow_box_outer3 { label="SQLite_DB_Insertion"; color=black; penwidth=2
+subgraph cluster_workflow_box_inner3 { label=""; color=white
+
+    node[shape=box style=filled fillcolor="#CCFFCC" peripheries=1 fontname=Courier]
+    subgraph cluster_workflow_box_outer31 { label="Violation_Table"; color=black; penwidth=2
+    subgraph cluster_workflow_box_inner31 { label=""; color=white
+        Violation_Prep [shape=record rankdir=LR label="{{<f0> Violation_Prep |<f1> Insert As Is}}"];
+        Violations
+        Violation_Prep -> Violations
+    }}
+
+    node[shape=box style=filled fillcolor="#CCFFCC" peripheries=1 fontname=Courier]
+    subgraph cluster_workflow_box_outer32 { label="Restaurant_Table"; color=black; penwidth=2
+    subgraph cluster_workflow_box_inner32 { label=""; color=white
+        Restaurant_Prep [shape=record rankdir=LR label="{{<f0> Restaurant_Prep |<f1> Create Unique Index}}"];
+        Restaurant
+        Restaurant_Prep -> Restaurant
+    }}
+
+    node[shape=box style=filled fillcolor="#CCFFCC" peripheries=1 fontname=Courier]
+    subgraph cluster_workflow_box_outer33 { label="Inspection_Table"; color=black; penwidth=2
+    subgraph cluster_workflow_box_inner33 { label=""; color=white
+        Inspection_Prep [shape=record rankdir=LR label="{{<f0> Inspection_Prep |<f1> Merge Restaurant Index}}"];
+        Inspection
+        Inspection_Prep -> Inspection
+    }}
+
+    node[shape=box style=filled fillcolor="#CCFFCC" peripheries=1 fontname=Courier]
+    subgraph cluster_workflow_box_outer34 { label="Inspection_Table"; color=black; penwidth=2
+    subgraph cluster_workflow_box_inner34 { label=""; color=white
+        Inspection_Details_Prep [shape=record rankdir=LR label="{{<f0> Inspection_Details_Prep |<f1> Insert As Is}}"];
+        Inspection_Details
+        Inspection_Details_Prep -> Inspection_Details
+    }}
+
+}}
+
+edge[fontname=Helvetica]
+
+Food_Inspections -> Facility_Type
+Food_Inspections -> Subset_Violations
+Names -> Integrity_Check_Keys [label=OR_Cleaned_Data]
+
+Integrity_Check_Keys -> Restaurant_Prep
+Restaurant_Prep -> Inspection_Prep
+Violation_Data -> Violation_Prep
+Violation_Data -> Inspection_Details_Prep
+
+
+}
+
